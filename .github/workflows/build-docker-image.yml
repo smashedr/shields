@@ -2,12 +2,16 @@ name: Build Docker Image
 on:
   pull_request:
   push:
-    branches:
-      - 'gh-readonly-queue/**'
+#    branches:
+#      - 'gh-readonly-queue/**'
 
 jobs:
   build-docker-image:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architecture: [amd64, arm64]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -15,7 +19,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/${{ matrix.architecture }}
 
       - name: Set Git Short SHA
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
@@ -25,7 +29,7 @@ jobs:
         with:
           context: .
           push: false
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/${{ matrix.architecture }}
           tags: ghcr.io/badges/shields:pr-validation
           build-args: |
             version=${{ env.SHORT_SHA }}
